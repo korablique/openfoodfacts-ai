@@ -20,8 +20,24 @@ Python 3.9 or higher is required to run this CLI.
 You need to install the CLI manually for now, there is no project published on Pypi.
 To do so:
 
+We recommend to install the CLI in a virtual environment. First, create a virtual environment using conda:
+```bash
+conda create -n ml-cli python=3.12
+conda activate ml-cli
+```
+
+Then, clone the repository and install the requirements:
+
+```bash
+git clone git@github.com:openfoodfacts/openfoodfacts-ai.git
+```
+
 ```bash
 python3 -m pip install -r requirements.txt
+```
+or if you are using conda:
+```bash
+pip install -r requirements.txt
 ```
 
 We assume in the following that you have installed the CLI in a virtual environment, and defined the following alias in your shell configuration file (e.g. `.bashrc` or `.zshrc`):
@@ -29,8 +45,15 @@ We assume in the following that you have installed the CLI in a virtual environm
 ```bash
 alias ml-cli='${VIRTUALENV_DIR}/bin/python3 ${PROJECT_PATH}/main.py'
 ```
+or if you are using conda:
+```bash
+alias ml-cli='${CONDA_PREFIX}/bin/python3 ${PROJECT_PATH}/main.py'
+``` 
 
-with `${VIRTUALENV_DIR}` the path to the virtual environment where you installed the CLI and `${PROJECT_PATH}` the path to the root of the project.
+with `${VIRTUALENV_DIR}` the path to the virtual environment where you installed the CLI and `${PROJECT_PATH}` the path to the root of the project, for example:
+```bash
+${PROJECT_PATH} = /home/user/openfoodfacts-ai/ml_utils/ml_utils_cli
+```
 
 ## Usage
 
@@ -40,7 +63,7 @@ To create a Label Studio project, you need to have a Label Studio instance runni
 
 By default, the CLI will use Open Food Facts Label Studio instance, but you can change the URL by setting the `--label-studio-url` CLI option.
 
-For all the commands that interact with Label Studio, you need to provide an API key using the `--api-key` CLI option. You can get an API key by logging in to the Label Studio instance and going to the settings page.
+For all the commands that interact with Label Studio, you need to provide an API key using the `--api-key` CLI option. You can get an API key by logging in to the Label Studio instance and going to the Account & Settings page.
 
 #### Create a project
 
@@ -50,7 +73,7 @@ Once you have a Label Studio instance running, you can create a project with the
 ml-cli projects create --title my_project --api-key API_KEY --config-file label_config.xml
 ```
 
-where `API_KEY` is the API key of the Label Studio instance, and `label_config.xml` is the configuration file of the project.
+where `API_KEY` is the API key of the Label Studio instance (API key is available at Account page), and `label_config.xml` is the configuration file of the project.
 
 #### Create a dataset file
 
@@ -77,7 +100,8 @@ where `PROJECT_ID` is the ID of the project you created.
 To accelerate annotation, you can pre-annotate the images with an object detection model. We support two pre-annotation backends:
 
 - Triton: you need to have a Triton server running with a model that supports object detection. The object detection model is expected to be a yolo-v8 model. You can set the URL of the Triton server with the `--triton-url` CLI option.
-- Ultralytics: you can use the Yolo-World model from Ultralytics, Ultralytics should be installed in the same virtualenv.
+
+- Ultralytics: you can use the [Yolo-World model from Ultralytics](https://github.com/ultralytics/ultralytics), Ultralytics should be installed in the same virtualenv.
 
 To pre-annotate the data with Triton, use the following command:
 
