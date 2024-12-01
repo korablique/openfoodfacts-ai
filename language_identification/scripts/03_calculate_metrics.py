@@ -3,13 +3,11 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from tqdm import trange
-from collections.abc import Sequence
+from typing import Sequence
 
-import langcodes
 from sklearn.metrics import confusion_matrix
-import fasttext
-from lingua import LanguageDetectorBuilder
-from huggingface_hub import hf_hub_download
+
+from language_identification.scripts.inference import calculate_fasttext_predictions, calculate_lingua_predictions
 
 
 def replace_lang_code(model_predictions: list[str], mapping: dict[str, str]) -> None:
@@ -26,58 +24,6 @@ def replace_lang_code(model_predictions: list[str], mapping: dict[str, str]) -> 
     for i in trange(len(model_predictions)):
         if model_predictions[i] in mapping:
             model_predictions[i] = mapping[model_predictions[i]]
-
-
-def get_fasttext_predictions(texts: list[str]) -> list[str]:
-    """
-    Detect the languages of the given texts using FastText model.
-
-    Args:
-        texts: A sequence of texts for which the language detection
-               needs to be performed.
-
-    Returns:
-        A list of predicted ISO 639-1 language codes.
-    """
-    # texts preprocessing
-    table = str.maketrans({"\n": " ", "\r": " "})
-    texts = [text.translate(table).lower() for text in texts]
-
-    # load model
-    fasttext_model_path = hf_hub_download(repo_id="facebook/fasttext-language-identification", filename="model.bin")
-    fasttext_model = fasttext.load_model(fasttext_model_path)
-
-    # get predictions
-    predictions, _ = fasttext_model.predict(texts)
-    predicted_lang = [predictions[i][0].removeprefix("__label__") for i in range(len(texts))]
-    # get iso 639-3
-    fasttext_preds = [predicted_lang[i].split("_")[0] for i in range(len(predicted_lang))]
-    # get iso 639-1
-    fasttext_preds = [langcodes.standardize_tag(lang_code, macro=True) for lang_code in fasttext_preds]
-    return fasttext_preds
-
-
-def get_lingua_predictions(texts: Sequence[str]) -> list[str]:
-    """
-    Detect the languages of the given texts using the Lingua language detector.
-
-    Args:
-        texts: A sequence of texts for which the language detection
-               needs to be performed.
-
-    Returns:
-        A list of predicted ISO 639-1 language codes.
-        If the model is uncertain about the language of a text, "xx" is returned
-        as a placeholder.
-    """
-    texts = [text.lower() for text in texts]
-    lingua_detector = LanguageDetectorBuilder.from_all_languages().build()
-
-    predictions = lingua_detector.detect_languages_in_parallel_of(texts)
-
-    lingua_preds = [prediction.iso_code_639_1.name.lower() if prediction is not None else "xx" 
-                    for prediction in predictions]
-    return lingua_preds
 
 
 def calculate_metrics(cm: np.ndarray, labels: Sequence, model_name: str) -> pd.DataFrame:
@@ -115,8 +61,8 @@ def main():
     true_labels = texts_under_10_words.lang.tolist()
     possible_class_labels = texts_under_10_words["lang"].value_counts().index.tolist()  # use value_counts in order to get sorted by frequency list
 
-    fasttext_preds = get_fasttext_predictions(texts)
-    lingua_preds = get_lingua_predictions(texts)
+    fasttext_preds = calculate_fasttext_predictions(texts)
+    lingua_preds = calculate_lingua_predictions(texts)
 
     mapping = {"yue": "zh"}  # yue is a type of Chinese
     replace_lang_code(fasttext_preds, mapping)
