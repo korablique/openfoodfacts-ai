@@ -10,7 +10,7 @@ def main():
     # path where to save selected data
     dataset_file = os.path.join(Path(__file__).parent, "texts_with_lang.csv")
 
-    hf_dataset = load_dataset("openfoodfacts/product-database", split=f"food")
+    hf_dataset = load_dataset("openfoodfacts/product-database", split="food")
 
     data = set()
     for entry, main_lang in zip(hf_dataset["ingredients_text"], hf_dataset["lang"]):  # iterate over products
